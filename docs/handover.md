@@ -1,136 +1,85 @@
 # Handover: Rust CE MCP Server
 
-## What We're Building
+## Current State
 
-A Rust replacement for the Python MCP server (`MCP_Server/mcp_cheatengine.py`). The Python server has a critical bug — blocking pipe reads with no timeout that cause 40+ minute hangs when CE freezes.
+**Repo:** `C:\dev\cheatengine-mcp-rs` → https://github.com/tantk/cheatengine-mcp-rs
+**Binary:** `target/release/ce-mcp-rs.exe` (3.9MB, compiles clean)
+**MCP config:** `.mcp.json` in repo root points to the Rust binary
 
-**Spec:** `docs/specs/2026-04-07-rust-mcp-server-design.md`
+## What's Done
 
-## New Repo
+### Rust MCP Server (complete)
+- 24 tools registered and verified via MCP smoke test (`tools/list` returns all 24)
+- Async named pipe client with 30s configurable timeout (`CE_PIPE_TIMEOUT` env var)
+- Pipe name configurable via `CE_PIPE_NAME` (default: `\\.\pipe\CE_MCP_Bridge_v99`)
+- rmcp 0.16 SDK, tokio async runtime, stdio transport for Claude Code
+- Uses `Parameters(p): Parameters<T>` pattern for tool params (rmcp 0.16 API)
 
-- **Name:** `tantk/cheatengine-mcp-rs`
-- **Local path:** `C:\dev\cheatengine-mcp-rs`
-- **GitHub:** Create as public repo
+### Lua Bridge Updates (in cheatenginemcp repo)
+- 6 new command handlers added to `C:\dev\cheatenginemcp\MCP_Server\ce_mcp_bridge.lua`
+- Handlers registered in `commandHandlers` table at bottom of file
+- Autorun script already in place: `C:\Program Files\Cheat Engine\autorun\mcpstart.lua`
 
-## Key Research
+### Tool Inventory (24 tools)
 
-### Rust MCP SDK (rmcp)
-- Official SDK: https://github.com/modelcontextprotocol/rust-sdk
-- Crate: `rmcp` v0.16.0
-- Features needed: `server`, `transport-io`, `macros`
-- Uses tokio async runtime
-- `#[tool]` macro for declaring tools
-- Stdio transport: `tokio::io::{stdin, stdout}`
-- Example: https://www.shuttle.dev/blog/2025/07/18/how-to-build-a-stdio-mcp-server-in-rust
-- DeepWiki transport examples: https://deepwiki.com/modelcontextprotocol/rust-sdk/5.4-transport-examples
+**Essential (5):** `ping`, `evaluate_lua`, `get_process_info`, `get_attached_process_quick`, `enum_modules`
 
-### Windows Named Pipes in Tokio
-- `tokio::net::windows::named_pipe` module
-- Docs: https://docs.rs/tokio/latest/src/tokio/net/windows/named_pipe.rs.html
-- Client: `ClientOptions::new().open(pipe_name)`
-- Async read/write with proper timeout via `tokio::time::timeout`
-- No thread hacks needed — native async I/O
+**New tools requiring bridge v12 (5):** `get_ce_lua_output`, `execute_ct_entry`, `get_ct_entries`, `freeze_address`, `read_utf16_string`
 
-### Pipe Protocol (from current Python server)
-```
-Request:  [4-byte LE length] [JSON-RPC request body]
-Response: [4-byte LE length] [JSON-RPC response body]
+**Breakpoints (6):** `set_breakpoint`, `set_data_breakpoint`, `remove_breakpoint`, `list_breakpoints`, `clear_all_breakpoints`, `get_breakpoint_hits`
 
-JSON-RPC request format:
-{
-  "jsonrpc": "2.0",
-  "method": "evaluate_lua",
-  "params": {"code": "return 1+1"},
-  "id": 1234567890
-}
+**Analysis (7):** `disassemble`, `get_instruction_info`, `find_function_boundaries`, `analyze_function`, `find_references`, `find_call_references`, `dissect_structure`
 
-Response format:
-{
-  "jsonrpc": "2.0",
-  "result": "{\"result\": \"2\", \"success\": true}",
-  "id": 1234567890
-}
-```
+**Scanning (1):** `aob_scan`
 
-### Current Python Server Issues (why we're replacing it)
-1. `win32file.ReadFile` blocks indefinitely — no timeout (caused 40+ min hangs)
-2. ThreadPoolExecutor timeout hack creates/destroys thread pool per read
-3. 75 lines of monkey-patching MCP SDK for Windows CRLF bug
-4. Synchronous pipe calls block the async event loop
-5. JSON double-serialization (parse then re-serialize)
-6. `self.handle = None` duplicated in close()
-7. No async anywhere despite using FastMCP (async framework)
-8. Pipe handle leak on timeout — background thread still blocked
+### Archived Tools (25 removed)
+**Redundant — evaluate_lua does it better (20):** `read_memory`, `read_integer`, `read_string`, `read_pointer`, `read_pointer_chain`, `write_integer`, `write_memory`, `write_string`, `scan_all`, `next_scan`, `get_scan_results`, `search_string`, `checksum_memory`, `generate_signature`, `get_memory_regions`, `enum_memory_regions_full`, `get_symbol_address`, `get_address_info`, `get_rtti_classname`, `get_thread_list`
 
-### Pipe Name
-- Default: `\\.\pipe\CE_MCP_Bridge_v99`
-- Set in Lua bridge at `ce_mcp_bridge.lua` line ~30
+**Dead weight (5):** `auto_assemble` (fails silently via pipe), `get_physical_address`, `start_dbvm_watch`, `stop_dbvm_watch`, `poll_dbvm_watch` (require DBVM)
 
-### Tool Definitions Reference
-Read the current Python server for exact tool names, parameters, and descriptions:
-`C:\dev\cheatenginemcp\MCP_Server\mcp_cheatengine.py` (lines 302-557)
+## What's NOT Done — Testing
 
-All 43 tools are thin wrappers:
-```python
-@mcp.tool()
-def evaluate_lua(code: str) -> str:
-    """Execute arbitrary Lua code in Cheat Engine."""
-    return format_result(ce_client.send_command("evaluate_lua", {"code": code}))
-```
+### Blocker
+The Python MCP server (`mcp_cheatengine.py`) in another Claude Code session holds the CE pipe. Only one client can connect at a time.
 
-The Rust equivalent should be:
-```rust
-#[tool(description = "Execute arbitrary Lua code in Cheat Engine.")]
-async fn evaluate_lua(&self, code: String) -> String {
-    self.pipe.send_command("evaluate_lua", json!({"code": code})).await
-}
-```
+### To unblock
+1. Close the other Claude Code session that uses the Python CE MCP server
+2. Restart Cheat Engine (autorun loads the updated bridge with 6 new handlers)
+3. Verify pipe exists: `powershell -Command "Test-Path '\\.\pipe\CE_MCP_Bridge_v99'"`
 
-### What format_result Does (Python)
-Wraps the CE bridge response in JSON. In Rust, just pass through the JSON string — no re-serialization needed.
+### Tests to run (in order)
+1. `ping` — proves pipe connection works end-to-end
+2. `get_attached_process_quick` — proves new bridge handlers work
+3. `get_process_info` — verify full process info
+4. `evaluate_lua` with `return 1+1` — proves Lua execution
+5. `get_ct_entries` — proves cheat table access
+6. `execute_ct_entry` — toggle a CT entry
+7. `get_ce_lua_output` — verify print capture works
+8. `freeze_address` — test address freezing
+9. `read_utf16_string` — test with a known game string address
 
-### Dependencies (minimal)
-```toml
-[dependencies]
-rmcp = { version = "0.16", features = ["server", "transport-io", "macros"] }
-tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-```
+### Timeout test
+1. Call `ping` with CE running — should succeed
+2. Kill CE process
+3. Call `ping` again — should return error within 30s, NOT hang forever
 
-87 crate dependencies total, compiles to single binary (~2-5MB).
+## What Still Needs Doing
 
-### .mcp.json Configuration
-```json
-{
-  "mcpServers": {
-    "cheatengine": {
-      "command": "C:/dev/cheatengine-mcp-rs/target/release/ce-mcp-rs.exe"
-    }
-  }
-}
-```
+### After testing passes
+1. Update `.mcp.json` in `C:\dev\longyin-cheats` to point to Rust binary
+2. Update `.mcp.json` in `C:\dev\cheatenginemcp` to point to Rust binary
+3. Archive Python server: `mv MCP_Server/mcp_cheatengine.py MCP_Server/legacy/`
+4. Commit and push both repos
+5. Commit and push this repo with test results
 
-## Files to Reference
+## Key Files
 
-| File | What it contains |
+| File | What |
 |---|---|
-| `C:\dev\cheatenginemcp\MCP_Server\mcp_cheatengine.py` | Current Python server (570 lines) — tool definitions, pipe protocol |
-| `C:\dev\cheatenginemcp\MCP_Server\ce_mcp_bridge.lua` | Lua bridge (unchanged) — pipe server side |
-| `C:\dev\cheatenginemcp\AI_Context\MCP_Bridge_Command_Reference.md` | All 43 MCP tools documented |
-| `C:\dev\cheatenginemcp\docs\specs\2026-04-07-rust-mcp-server-design.md` | Design spec |
-
-## Verification Steps
-
-1. `cargo build --release` compiles without errors
-2. `ping` tool returns CE bridge version info
-3. `evaluate_lua` with `return 1+1` returns `2`
-4. Timeout test: disconnect CE, call any tool, get error within 30s (not hang)
-5. All 43 tools callable from Claude Code
-6. Reconnection: restart CE, next tool call auto-reconnects
-
-## After Implementation
-
-1. Archive Python server: `MCP_Server/mcp_cheatengine.py` → `MCP_Server/legacy/mcp_cheatengine.py`
-2. Update `.mcp.json` in `C:\dev\longyin-cheats` to point to Rust binary
-3. Update `CLAUDE.md` in bridge repo to reference Rust server
+| `C:\dev\cheatengine-mcp-rs\src\main.rs` | MCP server entry point (stdio transport) |
+| `C:\dev\cheatengine-mcp-rs\src\pipe.rs` | Async named pipe client with timeout |
+| `C:\dev\cheatengine-mcp-rs\src\tools.rs` | All 24 tool definitions |
+| `C:\dev\cheatengine-mcp-rs\.mcp.json` | MCP config pointing to Rust binary |
+| `C:\dev\cheatenginemcp\MCP_Server\ce_mcp_bridge.lua` | Lua bridge (updated with 6 new handlers) |
+| `C:\dev\cheatenginemcp\MCP_Server\mcp_cheatengine.py` | OLD Python server (to be archived) |
+| `C:\Program Files\Cheat Engine\autorun\mcpstart.lua` | CE autorun that loads the bridge |

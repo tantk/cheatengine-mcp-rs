@@ -25,145 +25,6 @@ fn ce_error(msg: String) -> ErrorData {
 // ============================================================================
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct GetSymbolAddressParams {
-    #[schemars(description = "Symbol name (e.g., 'Engine.GameEngine')")]
-    pub symbol: String,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct GetAddressInfoParams {
-    #[schemars(description = "Memory address to look up")]
-    pub address: String,
-    #[schemars(description = "Include module info")]
-    #[serde(default = "default_true")]
-    pub include_modules: bool,
-    #[schemars(description = "Include symbol info")]
-    #[serde(default = "default_true")]
-    pub include_symbols: bool,
-    #[schemars(description = "Include section info")]
-    #[serde(default)]
-    pub include_sections: bool,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct GetRttiClassnameParams {
-    #[schemars(description = "Address of object to identify")]
-    pub address: String,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct ReadMemoryParams {
-    #[schemars(description = "Memory address to read from")]
-    pub address: String,
-    #[schemars(description = "Number of bytes to read")]
-    #[serde(default = "default_256")]
-    pub size: i64,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct ReadIntegerParams {
-    #[schemars(description = "Memory address to read from")]
-    pub address: String,
-    #[schemars(description = "Type: byte, word, dword, qword, float, double")]
-    #[serde(default = "default_dword", rename = "type")]
-    pub value_type: String,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct ReadStringParams {
-    #[schemars(description = "Memory address to read from")]
-    pub address: String,
-    #[schemars(description = "Maximum string length")]
-    #[serde(default = "default_256")]
-    pub max_length: i64,
-    #[schemars(description = "Read as wide/UTF-16 string")]
-    #[serde(default)]
-    pub wide: bool,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct ReadPointerParams {
-    #[schemars(description = "Base address")]
-    pub address: String,
-    #[schemars(description = "Offsets for pointer chain")]
-    pub offsets: Option<Vec<i64>>,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct ReadPointerChainParams {
-    #[schemars(description = "Base address")]
-    pub base: String,
-    #[schemars(description = "Offsets for pointer chain")]
-    pub offsets: Vec<i64>,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct ChecksumMemoryParams {
-    #[schemars(description = "Memory address")]
-    pub address: String,
-    #[schemars(description = "Size of memory region")]
-    pub size: i64,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct ScanAllParams {
-    #[schemars(description = "Value to scan for")]
-    pub value: String,
-    #[schemars(description = "Scan type: exact, string, array")]
-    #[serde(default = "default_exact", rename = "type")]
-    pub scan_type: String,
-    #[schemars(description = "Memory protection filter (e.g., '+W-C')")]
-    #[serde(default = "default_wc_protection")]
-    pub protection: String,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct GetScanResultsParams {
-    #[schemars(description = "Maximum number of results")]
-    #[serde(default = "default_100")]
-    pub max: i64,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct NextScanParams {
-    #[schemars(description = "Value to scan for")]
-    pub value: String,
-    #[schemars(description = "Scan type: exact, increased, decreased, changed, unchanged, bigger, smaller")]
-    #[serde(default = "default_exact")]
-    pub scan_type: String,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct WriteIntegerParams {
-    #[schemars(description = "Memory address to write to")]
-    pub address: String,
-    #[schemars(description = "Value to write")]
-    pub value: serde_json::Value,
-    #[schemars(description = "Type: byte, word, dword, qword, float, double")]
-    #[serde(default = "default_dword", rename = "type")]
-    pub value_type: String,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct WriteMemoryParams {
-    #[schemars(description = "Memory address to write to")]
-    pub address: String,
-    #[schemars(description = "Raw bytes to write")]
-    pub bytes: Vec<i64>,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct WriteStringParams {
-    #[schemars(description = "Memory address to write to")]
-    pub address: String,
-    #[schemars(description = "String value to write")]
-    pub value: String,
-    #[schemars(description = "Write as wide/UTF-16 string")]
-    #[serde(default)]
-    pub wide: bool,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub struct AobScanParams {
     #[schemars(description = "AOB pattern (e.g., '48 89 5C 24')")]
     pub pattern: String,
@@ -173,38 +34,6 @@ pub struct AobScanParams {
     #[schemars(description = "Maximum results")]
     #[serde(default = "default_100")]
     pub limit: i64,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct SearchStringParams {
-    #[schemars(description = "String to search for in memory")]
-    pub string: String,
-    #[schemars(description = "Search as wide/UTF-16")]
-    #[serde(default)]
-    pub wide: bool,
-    #[schemars(description = "Maximum results")]
-    #[serde(default = "default_100")]
-    pub limit: i64,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct GenerateSignatureParams {
-    #[schemars(description = "Address to generate signature for")]
-    pub address: String,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct GetMemoryRegionsParams {
-    #[schemars(description = "Maximum regions to return")]
-    #[serde(default = "default_100")]
-    pub max: i64,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct EnumMemoryRegionsFullParams {
-    #[schemars(description = "Maximum regions to return")]
-    #[serde(default = "default_500")]
-    pub max: i64,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -311,48 +140,47 @@ pub struct GetBreakpointHitsParams {
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct GetPhysicalAddressParams {
-    #[schemars(description = "Virtual address to translate")]
-    pub address: String,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct StartDbvmWatchParams {
-    #[schemars(description = "Address to watch")]
-    pub address: String,
-    #[schemars(description = "Watch mode: 'w' (writes), 'r' (reads), 'x' (execute)")]
-    #[serde(default = "default_w")]
-    pub mode: String,
-    #[schemars(description = "Maximum log entries")]
-    #[serde(default = "default_1000")]
-    pub max_entries: i64,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct StopDbvmWatchParams {
-    #[schemars(description = "Address of watch to stop")]
-    pub address: String,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct PollDbvmWatchParams {
-    #[schemars(description = "Address of watch to poll")]
-    pub address: String,
-    #[schemars(description = "Maximum results to return")]
-    #[serde(default = "default_1000")]
-    pub max_results: i64,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub struct EvaluateLuaParams {
     #[schemars(description = "Lua code to execute in Cheat Engine")]
     pub code: String,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct AutoAssembleParams {
-    #[schemars(description = "AutoAssembler script to execute")]
-    pub script: String,
+pub struct GetCeLuaOutputParams {
+    #[schemars(description = "If true, clear the output buffer after reading")]
+    #[serde(default)]
+    pub clear: bool,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct ExecuteCtEntryParams {
+    #[schemars(description = "Cheat table entry name or ID")]
+    pub entry: String,
+    #[schemars(description = "true to enable, false to disable")]
+    pub active: bool,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct FreezeAddressParams {
+    #[schemars(description = "Memory address to freeze")]
+    pub address: String,
+    #[schemars(description = "Value to freeze at")]
+    pub value: serde_json::Value,
+    #[schemars(description = "Value type: byte, word, dword, qword, float, double")]
+    #[serde(default = "default_dword", rename = "type")]
+    pub value_type: String,
+    #[schemars(description = "false to unfreeze/remove")]
+    #[serde(default = "default_true")]
+    pub freeze: bool,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct ReadUtf16StringParams {
+    #[schemars(description = "Memory address to read from")]
+    pub address: String,
+    #[schemars(description = "Maximum number of characters to read")]
+    #[serde(default = "default_256")]
+    pub max_length: i64,
 }
 
 // ============================================================================
@@ -367,9 +195,6 @@ fn default_256() -> i64 {
 }
 fn default_100() -> i64 {
     100
-}
-fn default_500() -> i64 {
-    500
 }
 fn default_20() -> i64 {
     20
@@ -386,27 +211,18 @@ fn default_16() -> i64 {
 fn default_4() -> i64 {
     4
 }
-fn default_1000() -> i64 {
-    1000
-}
 fn default_dword() -> String {
     "dword".into()
 }
-fn default_exact() -> String {
-    "exact".into()
-}
 fn default_w() -> String {
     "w".into()
-}
-fn default_wc_protection() -> String {
-    "+W-C".into()
 }
 fn default_x_protection() -> String {
     "+X".into()
 }
 
 // ============================================================================
-// MCP Tool implementations
+// MCP Tool implementations (29 tools)
 // ============================================================================
 
 #[tool_router]
@@ -445,22 +261,6 @@ impl CeServer {
         Ok(CallToolResult::success(vec![Content::text(result)]))
     }
 
-    #[tool(description = "Run an AutoAssembler script (injection, code caves, etc).")]
-    async fn auto_assemble(
-        &self,
-        Parameters(params): Parameters<AutoAssembleParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "auto_assemble",
-                serde_json::json!({"script": params.script}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
     // --- PROCESS & MODULES ---
 
     #[tool(description = "Get current process ID, name, modules count and architecture.")]
@@ -483,283 +283,7 @@ impl CeServer {
         Ok(CallToolResult::success(vec![Content::text(result)]))
     }
 
-    #[tool(description = "Get list of threads in the attached process.")]
-    async fn get_thread_list(&self) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command("get_thread_list", serde_json::json!({}))
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Resolve a symbol name (e.g., 'Engine.GameEngine') to an address.")]
-    async fn get_symbol_address(
-        &self,
-        Parameters(params): Parameters<GetSymbolAddressParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "get_symbol_address",
-                serde_json::json!({"symbol": params.symbol}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Get symbolic name and module info for an address.")]
-    async fn get_address_info(
-        &self,
-        Parameters(params): Parameters<GetAddressInfoParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "get_address_info",
-                serde_json::json!({
-                    "address": params.address,
-                    "include_modules": params.include_modules,
-                    "include_symbols": params.include_symbols,
-                    "include_sections": params.include_sections,
-                }),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Identify the class name of an object at address using RTTI.")]
-    async fn get_rtti_classname(
-        &self,
-        Parameters(params): Parameters<GetRttiClassnameParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "get_rtti_classname",
-                serde_json::json!({"address": params.address}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    // --- MEMORY READING ---
-
-    #[tool(description = "Read raw bytes from memory.")]
-    async fn read_memory(
-        &self,
-        Parameters(params): Parameters<ReadMemoryParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "read_memory",
-                serde_json::json!({"address": params.address, "size": params.size}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Read a number from memory. Types: byte, word, dword, qword, float, double.")]
-    async fn read_integer(
-        &self,
-        Parameters(params): Parameters<ReadIntegerParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "read_integer",
-                serde_json::json!({"address": params.address, "type": params.value_type}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Read a string from memory (ASCII or Wide/UTF-16).")]
-    async fn read_string(
-        &self,
-        Parameters(params): Parameters<ReadStringParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "read_string",
-                serde_json::json!({
-                    "address": params.address,
-                    "max_length": params.max_length,
-                    "wide": params.wide,
-                }),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Read a pointer chain. Returns the final address and value.")]
-    async fn read_pointer(
-        &self,
-        Parameters(params): Parameters<ReadPointerParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let offsets = params.offsets.unwrap_or_else(|| vec![0]);
-        let result = self
-            .pipe
-            .send_command(
-                "read_pointer_chain",
-                serde_json::json!({"base": params.address, "offsets": offsets}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Follow a multi-level pointer chain and return analysis of every step.")]
-    async fn read_pointer_chain(
-        &self,
-        Parameters(params): Parameters<ReadPointerChainParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "read_pointer_chain",
-                serde_json::json!({"base": params.base, "offsets": params.offsets}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Calculate MD5 checksum of a memory region to detect changes.")]
-    async fn checksum_memory(
-        &self,
-        Parameters(params): Parameters<ChecksumMemoryParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "checksum_memory",
-                serde_json::json!({"address": params.address, "size": params.size}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
     // --- SCANNING ---
-
-    #[tool(description = "Unified Memory Scanner. Types: exact, string, array. Protection: +W-C.")]
-    async fn scan_all(
-        &self,
-        Parameters(params): Parameters<ScanAllParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "scan_all",
-                serde_json::json!({
-                    "value": params.value,
-                    "type": params.scan_type,
-                    "protection": params.protection,
-                }),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Get results from the last scan_all operation.")]
-    async fn get_scan_results(
-        &self,
-        Parameters(params): Parameters<GetScanResultsParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "get_scan_results",
-                serde_json::json!({"max": params.max}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Next scan to filter results. Types: exact, increased, decreased, changed, unchanged, bigger, smaller.")]
-    async fn next_scan(
-        &self,
-        Parameters(params): Parameters<NextScanParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "next_scan",
-                serde_json::json!({"value": params.value, "scan_type": params.scan_type}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    // --- MEMORY WRITING ---
-
-    #[tool(description = "Write a number to memory. Types: byte, word, dword, qword, float, double.")]
-    async fn write_integer(
-        &self,
-        Parameters(params): Parameters<WriteIntegerParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "write_integer",
-                serde_json::json!({
-                    "address": params.address,
-                    "value": params.value,
-                    "type": params.value_type,
-                }),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Write raw bytes to memory.")]
-    async fn write_memory(
-        &self,
-        Parameters(params): Parameters<WriteMemoryParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "write_memory",
-                serde_json::json!({"address": params.address, "bytes": params.bytes}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Write a string to memory (ASCII or Wide/UTF-16).")]
-    async fn write_string(
-        &self,
-        Parameters(params): Parameters<WriteStringParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "write_string",
-                serde_json::json!({
-                    "address": params.address,
-                    "value": params.value,
-                    "wide": params.wide,
-                }),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
 
     #[tool(description = "Scan for an Array of Bytes pattern. Example: '48 89 5C 24'.")]
     async fn aob_scan(
@@ -775,74 +299,6 @@ impl CeServer {
                     "protection": params.protection,
                     "limit": params.limit,
                 }),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Quickly search for a text string in memory.")]
-    async fn search_string(
-        &self,
-        Parameters(params): Parameters<SearchStringParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "search_string",
-                serde_json::json!({
-                    "string": params.string,
-                    "wide": params.wide,
-                    "limit": params.limit,
-                }),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Generate a unique AOB signature for this specific address.")]
-    async fn generate_signature(
-        &self,
-        Parameters(params): Parameters<GenerateSignatureParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "generate_signature",
-                serde_json::json!({"address": params.address}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Get list of valid memory regions nearby common bases.")]
-    async fn get_memory_regions(
-        &self,
-        Parameters(params): Parameters<GetMemoryRegionsParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "get_memory_regions",
-                serde_json::json!({"max": params.max}),
-            )
-            .await
-            .map_err(|e| ce_error(e.to_string()))?;
-        Ok(CallToolResult::success(vec![Content::text(result)]))
-    }
-
-    #[tool(description = "Enumerate ALL memory regions in the process.")]
-    async fn enum_memory_regions_full(
-        &self,
-        Parameters(params): Parameters<EnumMemoryRegionsFullParams>,
-    ) -> Result<CallToolResult, ErrorData> {
-        let result = self
-            .pipe
-            .send_command(
-                "enum_memory_regions_full",
-                serde_json::json!({"max": params.max}),
             )
             .await
             .map_err(|e| ce_error(e.to_string()))?;
@@ -1063,37 +519,64 @@ impl CeServer {
         Ok(CallToolResult::success(vec![Content::text(result)]))
     }
 
-    // --- DBVM / HYPERVISOR TOOLS ---
+    // --- NEW TOOLS (require Lua bridge v12+ support) ---
 
-    #[tool(description = "Translate Virtual Address to Physical Address (requires DBVM).")]
-    async fn get_physical_address(
+    #[tool(description = "Read CE Lua console output buffer. Use to verify cheat/script results.")]
+    async fn get_ce_lua_output(
         &self,
-        Parameters(params): Parameters<GetPhysicalAddressParams>,
+        Parameters(params): Parameters<GetCeLuaOutputParams>,
     ) -> Result<CallToolResult, ErrorData> {
         let result = self
             .pipe
             .send_command(
-                "get_physical_address",
-                serde_json::json!({"address": params.address}),
+                "get_lua_output",
+                serde_json::json!({"clear": params.clear}),
             )
             .await
             .map_err(|e| ce_error(e.to_string()))?;
         Ok(CallToolResult::success(vec![Content::text(result)]))
     }
 
-    #[tool(description = "Start invisible DBVM hypervisor watch. Modes: w, r, x.")]
-    async fn start_dbvm_watch(
+    #[tool(description = "Enable or disable a cheat table entry by name or ID.")]
+    async fn execute_ct_entry(
         &self,
-        Parameters(params): Parameters<StartDbvmWatchParams>,
+        Parameters(params): Parameters<ExecuteCtEntryParams>,
     ) -> Result<CallToolResult, ErrorData> {
         let result = self
             .pipe
             .send_command(
-                "start_dbvm_watch",
+                "execute_ct_entry",
+                serde_json::json!({"entry": params.entry, "active": params.active}),
+            )
+            .await
+            .map_err(|e| ce_error(e.to_string()))?;
+        Ok(CallToolResult::success(vec![Content::text(result)]))
+    }
+
+    #[tool(description = "List all cheat table entries with ID, name, and enabled/disabled status.")]
+    async fn get_ct_entries(&self) -> Result<CallToolResult, ErrorData> {
+        let result = self
+            .pipe
+            .send_command("get_ct_entries", serde_json::json!({}))
+            .await
+            .map_err(|e| ce_error(e.to_string()))?;
+        Ok(CallToolResult::success(vec![Content::text(result)]))
+    }
+
+    #[tool(description = "Freeze a memory address to a value (CE keeps writing it every tick). Set freeze=false to unfreeze.")]
+    async fn freeze_address(
+        &self,
+        Parameters(params): Parameters<FreezeAddressParams>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let result = self
+            .pipe
+            .send_command(
+                "freeze_address",
                 serde_json::json!({
                     "address": params.address,
-                    "mode": params.mode,
-                    "max_entries": params.max_entries,
+                    "value": params.value,
+                    "type": params.value_type,
+                    "freeze": params.freeze,
                 }),
             )
             .await
@@ -1101,36 +584,30 @@ impl CeServer {
         Ok(CallToolResult::success(vec![Content::text(result)]))
     }
 
-    #[tool(description = "Stop DBVM watch and return results.")]
-    async fn stop_dbvm_watch(
+    #[tool(description = "Read a UTF-16LE string from memory and return decoded text. For CJK/Unicode game strings.")]
+    async fn read_utf16_string(
         &self,
-        Parameters(params): Parameters<StopDbvmWatchParams>,
+        Parameters(params): Parameters<ReadUtf16StringParams>,
     ) -> Result<CallToolResult, ErrorData> {
         let result = self
             .pipe
             .send_command(
-                "stop_dbvm_watch",
-                serde_json::json!({"address": params.address}),
+                "read_utf16_string",
+                serde_json::json!({
+                    "address": params.address,
+                    "max_length": params.max_length,
+                }),
             )
             .await
             .map_err(|e| ce_error(e.to_string()))?;
         Ok(CallToolResult::success(vec![Content::text(result)]))
     }
 
-    #[tool(description = "Poll DBVM watch logs without stopping. Returns register state.")]
-    async fn poll_dbvm_watch(
-        &self,
-        Parameters(params): Parameters<PollDbvmWatchParams>,
-    ) -> Result<CallToolResult, ErrorData> {
+    #[tool(description = "Quick check if a process is attached. Returns process ID and name only.")]
+    async fn get_attached_process_quick(&self) -> Result<CallToolResult, ErrorData> {
         let result = self
             .pipe
-            .send_command(
-                "poll_dbvm_watch",
-                serde_json::json!({
-                    "address": params.address,
-                    "max_results": params.max_results,
-                }),
-            )
+            .send_command("get_attached_process_quick", serde_json::json!({}))
             .await
             .map_err(|e| ce_error(e.to_string()))?;
         Ok(CallToolResult::success(vec![Content::text(result)]))

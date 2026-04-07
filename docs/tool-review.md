@@ -100,7 +100,7 @@ Based on extensive cheat development for LongYinLiZhiZhuan (IL2CPP Unity game) �
 
 ## Recommendation for Rust Server
 
-1. **Implement all 43 tools** for backward compatibility
-2. **Add the 6 missing tools** as Lua bridge + MCP additions (separate task)
-3. In README, document which tools are essential vs redundant
-4. Long-term: consider removing dead weight tools to reduce Claude's tool context overhead (43 tools is a lot of context for every MCP call)
+1. ~~**Implement all 43 tools** for backward compatibility~~ — done (v0.1.0)
+2. ~~**Add the 6 missing tools** as MCP tool definitions~~ — done (v0.1.0, 49 tools total). **Lua bridge v12+ still needed** to handle the 6 new commands: `get_lua_output`, `execute_ct_entry`, `get_ct_entries`, `freeze_address`, `read_utf16_string`, `get_attached_process_quick`
+3. ~~In README, document which tools are essential vs redundant~~ — done
+4. Long-term: consider removing dead weight tools to reduce Claude's tool context overhead (49 tools is a lot of context for every MCP call)
